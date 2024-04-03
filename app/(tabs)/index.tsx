@@ -21,10 +21,12 @@ import {
   searchData,
   resetSearch,
 } from "@/redux/action/actions";
+import { State } from "expo-router/build/fork/getPathFromState";
+import { RootState } from "@/redux/store";
 
 const index = () => {
   const dispatch = useDispatch();
-  const reEx = useSelector((state) => state.dataReducer.listReEx);
+  const reEx = useSelector((state: RootState) => state.dataReducer.listReEx);
   const [search, setSearch] = useState("");
   const [title, settitle] = useState("");
   const [description, setdescription] = useState("");
@@ -33,9 +35,15 @@ const index = () => {
   const [amount, setamount] = useState(0);
   const [modalVisible, setModalVisible] = useState(false);
   const [editItem, setEditItem] = useState(null);
-  const totalIncome = useSelector((state) => state.dataReducer.totalIncome);
-  const totalExpense = useSelector((state) => state.dataReducer.totalExpense);
-  const searchResults = useSelector((state) => state.dataReducer.searchResults);
+  const totalIncome = useSelector(
+    (state: RootState) => state.dataReducer.totalIncome
+  );
+  const totalExpense = useSelector(
+    (state: RootState) => state.dataReducer.totalExpense
+  );
+  const searchResults = useSelector(
+    (state: RootState) => state.dataReducer.searchResults
+  );
 
   useEffect(() => {
     dispatch(fetchData());
