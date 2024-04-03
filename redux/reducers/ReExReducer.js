@@ -1,118 +1,151 @@
 import { createSlice } from '@reduxjs/toolkit';
+import {
+    FETCH_DATA_REQUEST,
+    FETCH_DATA_SUCCESS,
+    FETCH_DATA_FAILURE,
+    ADD_DATA_REQUEST,
+    ADD_DATA_SUCCESS,
+    ADD_DATA_FAILURE,
+    UPDATE_DATA_REQUEST,
+    UPDATE_DATA_SUCCESS,
+    UPDATE_DATA_FAILURE,
+    DELETE_DATA_REQUEST,
+    DELETE_DATA_SUCCESS,
+    DELETE_DATA_FAILURE,
+    SEARCH_DATA_REQUEST,
+    SEARCH_DATA_SUCCESS,
+    SEARCH_DATA_FAILURE,
+    RESET_SEARCH,
+} from '../action/actions';
 
 // Define the initial state of the ReEx slice
 const initialState = {
-    listReEx: [
-        {
-            id: 1,
-            title: 'Salary',
-            description: 'Monthly salary for March',
-            date: '2024-03-01',
-            type: 'income',
-            amount: 3000
-        },
-        {
-            id: 2,
-            title: 'Groceries',
-            description: 'Weekly groceries',
-            date: '2024-03-03',
-            type: 'expense',
-            amount: 150
-        },
-        {
-            id: 3,
-            title: 'Electricity Bill',
-            description: 'Monthly electricity bill',
-            date: '2024-03-05',
-            type: 'expense',
-            amount: 100
-        },
-        {
-            id: 4,
-            title: 'Gym Membership',
-            description: 'Annual gym membership fee',
-            date: '2024-03-10',
-            type: 'expense',
-            amount: 400
-        },
-        {
-            id: 5,
-            title: 'Freelance Project',
-            description: 'Payment received for freelance project',
-            date: '2024-03-15',
-            type: 'income',
-            amount: 1200
-        }
-    ],
+    listReEx: [],
     searchResults: [],
-    totalIncome: 4200,
-    totalExpense: 650,
+    totalIncome: 0,
+    totalExpense: 0,
 };
 
-const ReExSlice = createSlice({
-    name: "ReEx",
-    initialState,
-    reducers: {
-        // Add a new transaction
-        addReEx: (state, action) => {
-            state.listReEx.push(action.payload);
-            // Recalculate totals
-            if (action.payload.type === 'income') {
-                state.totalIncome += action.payload.amount;
-            } else {
-                state.totalExpense += action.payload.amount;
-            }
-        },
-        // Delete a transaction
-        deleteReEx: (state, action) => {
-            const transactionToDelete = state.listReEx.find(reex => reex.id === action.payload);
-            if (transactionToDelete) {
-                // Recalculate totals
-                if (transactionToDelete.type === 'income') {
-                    state.totalIncome -= transactionToDelete.amount;
-                } else {
-                    state.totalExpense -= transactionToDelete.amount;
+const dataReducer = (
+    state = initialState,
+    action
+) => {
+    switch (action.type) {
+        case FETCH_DATA_REQUEST:
+            return {
+                ...state,
+                loading: true,
+            };
+        case FETCH_DATA_SUCCESS:
+            let totalIncome = 0;
+            let totalExpense = 0;
+            action.payload.forEach(item => {
+                if (item.type === 'income') {
+                    totalIncome += item.amount;
+                } else if (item.type === 'expense') {
+                    totalExpense += item.amount;
                 }
-            }
-            state.listReEx = state.listReEx.filter(reex => reex.id !== action.payload);
-        },
-        // Update a transaction
-        updateReEx: (state, action) => {
-            state.listReEx = state.listReEx.map(reex => {
-                if (reex.id === action.payload.id) {
-                    // Recalculate totals if the amount or type has changed
-                    if (reex.amount !== action.payload.amount || reex.type !== action.payload.type) {
-                        if (reex.type === 'income') {
-                            state.totalIncome -= reex.amount;
-                        } else {
-                            state.totalExpense -= reex.amount;
-                        }
-                        if (action.payload.type === 'income') {
-                            state.totalIncome += action.payload.amount;
-                        } else {
-                            state.totalExpense += action.payload.amount;
-                        }
-                    }
-                    return { ...reex, ...action.payload };
-                }
-                return reex;
             });
-        },
-        // Search for transactions by title
-        searchReEx: (state, action) => {
-            state.searchResults = state.listReEx.filter(reex =>
-                reex.title.toLowerCase().includes(action.payload.toLowerCase())
-            );
-        },
-        // Reset search results
-        resetSearch: (state) => {
-            state.searchResults = [];
-        }
+            return {
+                ...state,
+                loading: false,
+                listReEx: action.payload,
+                totalIncome,
+                totalExpense,
+                error: '',
+            };
+        case FETCH_DATA_FAILURE:
+            return {
+                ...state,
+                loading: false,
+                error: action.payload,
+            };
+        case ADD_DATA_REQUEST:
+            return {
+                ...state,
+                loading: true,
+            };
+        case ADD_DATA_SUCCESS:
+            return {
+                ...state,
+                loading: false,
+                listReEx: [...state.listReEx, action.payload],
+                totalIncome: state.totalIncome + (action.payload.type === 'income' ? action.payload.amount : 0),
+                totalExpense: state.totalExpense + (action.payload.type === 'expense' ? action.payload.amount : 0),
+                error: '',
+            };
+        case ADD_DATA_FAILURE:
+            return {
+                ...state,
+                loading: false,
+                error: action.payload,
+            };
+        case UPDATE_DATA_REQUEST:
+            return {
+                ...state,
+                loading: true,
+            };
+        case UPDATE_DATA_SUCCESS:
+            return {
+                ...state,
+                loading: false,
+                listReEx: state.listReEx.map(item => item._id === action.payload._id ? action.payload : item),
+                totalIncome: state.totalIncome - (oldItem.type === 'income' ? oldItem.amount : 0) + (updatedItem.type === 'income' ? updatedItem.amount : 0),
+                totalExpense: state.totalExpense - (oldItem.type === 'expense' ? oldItem.amount : 0) + (updatedItem.type === 'expense' ? updatedItem.amount : 0),
+                error: '',
+            };
+        case UPDATE_DATA_FAILURE:
+            return {
+                ...state,
+                loading: false,
+                error: action.payload.toString(),
+            };
+        case DELETE_DATA_REQUEST:
+            return {
+                ...state,
+                loading: true,
+            };
+        case DELETE_DATA_SUCCESS:
+            return {
+                ...state,
+                loading: false,
+                listReEx: state.listReEx.filter(item => item._id !== action.payload),
+                totalIncome: state.totalIncome - (deletedItem.type === 'income' ? deletedItem.amount : 0),
+                totalExpense: state.totalExpense - (deletedItem.type === 'expense' ? deletedItem.amount : 0),
+                error: '',
+            };
+        case DELETE_DATA_FAILURE:
+            return {
+                ...state,
+                loading: false,
+                error: action.payload,
+            };
+        case SEARCH_DATA_REQUEST:
+            return {
+                ...state,
+                loading: true,
+            };
+        case SEARCH_DATA_SUCCESS:
+            return {
+                ...state,
+                loading: false,
+                searchResults: action.payload,
+                error: '',
+            };
+        case SEARCH_DATA_FAILURE:
+            return {
+                ...state,
+                loading: false,
+                error: action.payload,
+            };
+        case RESET_SEARCH:
+            return {
+                ...state,
+                searchResults: [],
+            };
+        default:
+            return state;
     }
-});
+}
 
-// Export the actions
-export const { addReEx, deleteReEx, updateReEx, searchReEx, resetSearch } = ReExSlice.actions;
-
-// Export the reducer
-export default ReExSlice.reducer;
+export default dataReducer;

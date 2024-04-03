@@ -9,22 +9,22 @@ import {
   Button,
   Alert,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import {
-  addReEx,
-  deleteReEx,
-  updateReEx,
-  searchReEx,
-  resetSearch,
-} from "@/redux/reducers/ReExReducer";
-import uuid from "react-native-uuid";
 import { AntDesign, FontAwesome } from "@expo/vector-icons";
 import Checkbox from "expo-checkbox";
+import {
+  fetchData,
+  deleteData,
+  addData,
+  updateData,
+  searchData,
+  resetSearch,
+} from "@/redux/action/actions";
 
 const index = () => {
   const dispatch = useDispatch();
-  const reEx = useSelector((state) => state.listReEx);
+  const reEx = useSelector((state) => state.dataReducer.listReEx);
   const [search, setSearch] = useState("");
   const [title, settitle] = useState("");
   const [description, setdescription] = useState("");
@@ -33,21 +33,26 @@ const index = () => {
   const [amount, setamount] = useState(0);
   const [modalVisible, setModalVisible] = useState(false);
   const [editItem, setEditItem] = useState(null);
-  const totalIncome = useSelector((state) => state.totalIncome);
-  const totalExpense = useSelector((state) => state.totalExpense);
-  const searchResults = useSelector((state) => state.searchResults);
+  const totalIncome = useSelector((state) => state.dataReducer.totalIncome);
+  const totalExpense = useSelector((state) => state.dataReducer.totalExpense);
+  const searchResults = useSelector((state) => state.dataReducer.searchResults);
+
+  useEffect(() => {
+    dispatch(fetchData());
+    console.log(reEx);
+  }, [dispatch]);
 
   const handleAddReEx = () => {
     const newReEx = {
-      id: uuid.v4(),
       title,
       description,
       date,
-      type: type ? "income" : "expense", // convert boolean to string
+      type: type ? "income" : "expense",
       amount,
     };
-    dispatch(addReEx(newReEx));
+    dispatch(addData(newReEx)).then(() => dispatch(fetchData()));
     setModalVisible(false);
+    clearForm();
   };
 
   const handleDeleteReEx = (id) => {
@@ -63,7 +68,7 @@ const index = () => {
         {
           text: "OK",
           onPress: () => {
-            dispatch(deleteReEx(id));
+            dispatch(deleteData(id)).then(() => dispatch(fetchData()));
           },
         },
       ],
@@ -71,19 +76,27 @@ const index = () => {
     );
   };
   const handleUpdateReEx = () => {
-    if (editItem) {
-      const updatedReEx = {
-        id: editItem.id,
-        title,
-        description,
-        date,
-        type: type ? "income" : "expense",
-        amount,
-      };
-      dispatch(updateReEx(updatedReEx));
-      setModalVisible(false);
-      setEditItem(null);
-    }
+    const updatedReEx = {
+      title,
+      description,
+      date,
+      type: type ? "income" : "expense",
+      amount,
+    };
+    dispatch(updateData(editItem._id, updatedReEx)).then(() =>
+      dispatch(fetchData())
+    );
+    setModalVisible(false);
+    //clear form
+    clearForm();
+  };
+  const clearForm = () => {
+    settitle("");
+    setdescription("");
+    setdate("");
+    setType(true);
+    setamount(0);
+    setEditItem(null);
   };
 
   const handleEditReEx = (item) => {
@@ -99,7 +112,8 @@ const index = () => {
   const handleSearch = (text) => {
     setSearch(text);
     if (text) {
-      dispatch(searchReEx(text));
+      dispatch(searchData(text));
+      console.log(searchResults);
     } else {
       dispatch(resetSearch());
     }
@@ -188,10 +202,25 @@ const index = () => {
       </View>
       <FlatList
         data={search ? searchResults : reEx}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item._id}
         renderItem={({ item }) => (
-          <View style={styles.container}>
-            <View style={styles.textContainer}>
+          <View
+            style={[
+              styles.container,
+              {
+                backgroundColor: item.type === "income" ? "lightgreen" : "pink",
+              },
+            ]}
+          >
+            <View
+              style={[
+                styles.textContainer,
+                {
+                  backgroundColor:
+                    item.type === "income" ? "lightgreen" : "pink",
+                },
+              ]}
+            >
               <Text style={styles.title}>{item.title}</Text>
               <Text style={styles.description}>{item.description}</Text>
               <Text style={styles.date}>{item.date}</Text>
@@ -207,7 +236,7 @@ const index = () => {
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.button}
-                onPress={() => handleDeleteReEx(item.id)}
+                onPress={() => handleDeleteReEx(item._id)}
               >
                 <Text style={styles.buttonText}>Delete</Text>
               </TouchableOpacity>
@@ -262,11 +291,31 @@ const index = () => {
               onChangeText={(text) => setamount(Number(text))}
               value={String(amount)}
             />
-            <Button
-              title={editItem ? "Update" : "Add"}
-              onPress={editItem ? handleUpdateReEx : handleAddReEx}
-            />
-            <Button title="Cancel" onPress={() => setModalVisible(false)} />
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: 10,
+                gap: 10,
+              }}
+            >
+              <TouchableOpacity
+                onPress={editItem ? handleUpdateReEx : handleAddReEx}
+                style={styles.button}
+              >
+                <Text style={styles.buttonText}>
+                  {editItem ? "Update" : "Add"}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.button}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.buttonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>

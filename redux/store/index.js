@@ -1,8 +1,8 @@
 import { configureStore } from "@reduxjs/toolkit";
-import ReExReducer from "../reducers/ReExReducer";
+import dataReducer from "../reducers/ReExReducer";
 
 export const store = configureStore({
     reducer: {
-        ReEx: ReExReducer,
+        dataReducer,
     },
 });

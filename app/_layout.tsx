@@ -2,10 +2,8 @@ import { StyleSheet, Text, View } from "react-native";
 import React from "react";
 import { Stack } from "expo-router";
 import { Provider } from "react-redux";
-import { createStore } from "redux";
 import RxExReducer from "../redux/reducers/ReExReducer";
-
-const store = createStore(RxExReducer);
+import { store } from "../redux/store";
 
 const _layout = () => {
   return (
