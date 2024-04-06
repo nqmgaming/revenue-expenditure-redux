@@ -1,21 +1,11 @@
 import { createSlice } from '@reduxjs/toolkit';
 import {
-    FETCH_DATA_REQUEST,
-    FETCH_DATA_SUCCESS,
-    FETCH_DATA_FAILURE,
-    ADD_DATA_REQUEST,
-    ADD_DATA_SUCCESS,
-    ADD_DATA_FAILURE,
-    UPDATE_DATA_REQUEST,
-    UPDATE_DATA_SUCCESS,
-    UPDATE_DATA_FAILURE,
-    DELETE_DATA_REQUEST,
-    DELETE_DATA_SUCCESS,
-    DELETE_DATA_FAILURE,
-    SEARCH_DATA_REQUEST,
-    SEARCH_DATA_SUCCESS,
-    SEARCH_DATA_FAILURE,
-    RESET_SEARCH,
+    fetchData,
+    addData,
+    updateData,
+    deleteData,
+    searchData,
+    resetSearch,
 } from '../action/actions';
 
 // Define the initial state of the ReEx slice
@@ -24,128 +14,115 @@ const initialState = {
     searchResults: [],
     totalIncome: 0,
     totalExpense: 0,
+    isLoading: false,
+    error: null,
 };
 
-const dataReducer = (
-    state = initialState,
-    action
-) => {
-    switch (action.type) {
-        case FETCH_DATA_REQUEST:
-            return {
-                ...state,
-                loading: true,
-            };
-        case FETCH_DATA_SUCCESS:
-            let totalIncome = 0;
-            let totalExpense = 0;
-            action.payload.forEach(item => {
-                if (item.type === 'income') {
-                    totalIncome += item.amount;
-                } else if (item.type === 'expense') {
-                    totalExpense += item.amount;
-                }
-            });
-            return {
-                ...state,
-                loading: false,
-                listReEx: action.payload,
-                totalIncome,
-                totalExpense,
-                error: '',
-            };
-        case FETCH_DATA_FAILURE:
-            return {
-                ...state,
-                loading: false,
-                error: action.payload,
-            };
-        case ADD_DATA_REQUEST:
-            return {
-                ...state,
-                loading: true,
-            };
-        case ADD_DATA_SUCCESS:
-            return {
-                ...state,
-                loading: false,
-                listReEx: [...state.listReEx, action.payload],
-                totalIncome: state.totalIncome + (action.payload.type === 'income' ? action.payload.amount : 0),
-                totalExpense: state.totalExpense + (action.payload.type === 'expense' ? action.payload.amount : 0),
-                error: '',
-            };
-        case ADD_DATA_FAILURE:
-            return {
-                ...state,
-                loading: false,
-                error: action.payload,
-            };
-        case UPDATE_DATA_REQUEST:
-            return {
-                ...state,
-                loading: true,
-            };
-        case UPDATE_DATA_SUCCESS:
-            return {
-                ...state,
-                loading: false,
-                listReEx: state.listReEx.map(item => item._id === action.payload._id ? action.payload : item),
-                totalIncome: state.totalIncome - (oldItem.type === 'income' ? oldItem.amount : 0) + (updatedItem.type === 'income' ? updatedItem.amount : 0),
-                totalExpense: state.totalExpense - (oldItem.type === 'expense' ? oldItem.amount : 0) + (updatedItem.type === 'expense' ? updatedItem.amount : 0),
-                error: '',
-            };
-        case UPDATE_DATA_FAILURE:
-            return {
-                ...state,
-                loading: false,
-                error: action.payload.toString(),
-            };
-        case DELETE_DATA_REQUEST:
-            return {
-                ...state,
-                loading: true,
-            };
-        case DELETE_DATA_SUCCESS:
-            return {
-                ...state,
-                loading: false,
-                listReEx: state.listReEx.filter(item => item._id !== action.payload),
-                totalIncome: state.totalIncome - (deletedItem.type === 'income' ? deletedItem.amount : 0),
-                totalExpense: state.totalExpense - (deletedItem.type === 'expense' ? deletedItem.amount : 0),
-                error: '',
-            };
-        case DELETE_DATA_FAILURE:
-            return {
-                ...state,
-                loading: false,
-                error: action.payload,
-            };
-        case SEARCH_DATA_REQUEST:
-            return {
-                ...state,
-                loading: true,
-            };
-        case SEARCH_DATA_SUCCESS:
-            return {
-                ...state,
-                loading: false,
-                searchResults: action.payload,
-                error: '',
-            };
-        case SEARCH_DATA_FAILURE:
-            return {
-                ...state,
-                loading: false,
-                error: action.payload,
-            };
-        case RESET_SEARCH:
-            return {
-                ...state,
-                searchResults: [],
-            };
-        default:
-            return state;
-    }
-}
+const dataSlide = createSlice({
+    name: 'data',
+    initialState,
+    reducers: {},
+    extraReducers: (builder) => {
+        builder
+            .addCase(fetchData.pending(), (state, action) => {
+                state.isLoading = true;
+            })
+            .addCase(fetchData.fulfilled, (state, action) => {
+                let totalIncome = 0;
+                let totalExpense = 0;
+                action.payload.forEach(item => {
+                    if (item.type === 'income') {
+                        totalIncome += item.amount;
+                    } else if (item.type === 'expense') {
+                        totalExpense += item.amount;
+                    }
+                })
+                state.isLoading = false;
+                state.listReEx = action.payload;
+                state.totalIncome = totalIncome;
+                state.totalExpense = totalExpense;
+                state.error = null;
+            })
+            .addCase(fetchData.rejected, (state, action) => {
+                state.isLoading = false;
+                state.error = action.error.message;
+            })
 
-export default dataReducer;
+        builder
+            .addCase(addData.pending(), (state, action) => {
+                state.isLoading = true;
+            })
+            .addCase(addData.fulfilled, (state, action) => {
+                state.isLoading = false;
+                state.listReEx = [...state.listReEx, action.payload];
+                state.totalExpense = state.totalExpense + (action.payload.type === 'expense' ? action.payload.amount : 0);
+                state.totalIncome = state.totalIncome + (action.payload.type === 'income' ? action.payload.amount : 0);
+                state.error = null;
+            })
+            .addCase(addData.rejected, (state, action) => {
+                state.isLoading = false;
+                state.error = action.error.message;
+            })
+
+        builder
+            .addCase(updateData.pending(), (state, action) => {
+                state.isLoading = true;
+            })
+            .addCase(updateData.fulfilled, (state, action) => {
+                const oldItem = state.listReEx.find(item => item._id === action.payload._id);
+                const updatedItem = action.payload;
+
+                state.loading = false;
+                state.listReEx = state.listReEx.map(item => item._id === action.payload._id ? action.payload : item);
+                state.totalIncome = state.totalIncome - (oldItem.type === 'income' ? oldItem.amount : 0) + (updatedItem.type === 'income' ? updatedItem.amount : 0);
+                state.totalExpense = state.totalExpense - (oldItem.type === 'expense' ? oldItem.amount : 0) + (updatedItem.type === 'expense' ? updatedItem.amount : 0);
+                state.error = '';
+            })
+            .addCase(updateData.rejected, (state, action) => {
+                state.isLoading = false;
+                state.error = action.error.message;
+            })
+        builder
+            .addCase(deleteData.pending(), (state, action) => {
+                state.isLoading = true;
+            })
+            .addCase(deleteData.fulfilled, (state, action) => {
+                state.isLoading = false;
+                state.listReEx = state.listReEx.filter(item => item.id !== action.payload);
+                state.totalExpense = state.totalExpense - (action.payload.type === 'expense' ? action.payload.amount : 0);
+                state.totalIncome = state.totalIncome - (action.payload.type === 'income' ? action.payload.amount : 0);
+                state.error = null;
+            })
+            .addCase(deleteData.rejected, (state, action) => {
+                state.isLoading = false;
+                state.error = action.error.message;
+            })
+        builder
+            .addCase(searchData.pending(), (state, action) => {
+                state.isLoading = true;
+            })
+            .addCase(searchData.fulfilled, (state, action) => {
+                state.isLoading = false;
+                state.searchResults = action.payload;
+                state.error = null;
+            })
+            .addCase(searchData.rejected, (state, action) => {
+                state.isLoading = false;
+                state.error = action.error.message;
+            })
+        builder
+            .addCase(resetSearch.fulfilled, (state, action) => {
+                state.searchResults = [];
+            })
+            .addCase(resetSearch.rejected, (state, action) => {
+                state.searchResults = [];
+            })
+            .addCase(resetSearch.pending(), (state, action) => {
+                state.searchResults = [];
+            })
+
+    }
+
+})
+
+export default dataSlide.reducer;

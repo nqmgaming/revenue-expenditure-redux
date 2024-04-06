@@ -21,12 +21,11 @@ import {
   searchData,
   resetSearch,
 } from "@/redux/action/actions";
-import { State } from "expo-router/build/fork/getPathFromState";
 import { RootState } from "@/redux/store";
 
 const index = () => {
   const dispatch = useDispatch();
-  const reEx = useSelector((state: RootState) => state.dataReducer.listReEx);
+  const reEx = useSelector((state: RootState) => state.listReEx.listReEx);
   const [search, setSearch] = useState("");
   const [title, settitle] = useState("");
   const [description, setdescription] = useState("");
@@ -36,13 +35,13 @@ const index = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [editItem, setEditItem] = useState(null);
   const totalIncome = useSelector(
-    (state: RootState) => state.dataReducer.totalIncome
+    (state: RootState) => state.listReEx.totalIncome
   );
   const totalExpense = useSelector(
-    (state: RootState) => state.dataReducer.totalExpense
+    (state: RootState) => state.listReEx.totalExpense
   );
   const searchResults = useSelector(
-    (state: RootState) => state.dataReducer.searchResults
+    (state: RootState) => state.listReEx.searchResults
   );
 
   useEffect(() => {
@@ -91,7 +90,12 @@ const index = () => {
       type: type ? "income" : "expense",
       amount,
     };
-    dispatch(updateData(editItem._id, updatedReEx)).then(() =>
+    const id = editItem._id;
+    console.log("====================================");
+    console.log(updatedReEx);
+    console.log("====================================");
+
+    dispatch(updateData({ id, data: updatedReEx })).then(() =>
       dispatch(fetchData())
     );
     setModalVisible(false);
@@ -108,6 +112,9 @@ const index = () => {
   };
 
   const handleEditReEx = (item) => {
+    console.log("====================================");
+    console.log(item);
+    console.log("====================================");
     settitle(item.title);
     setdescription(item.description);
     setdate(item.date);

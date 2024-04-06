@@ -1,9 +1,9 @@
 import { configureStore } from "@reduxjs/toolkit";
-import dataReducer from "../reducers/ReExReducer";
+import dataSlide from "../reducers/ReExReducer";
 
 export const store = configureStore({
   reducer: {
-    dataReducer,
+    listReEx: dataSlide,
   },
   devTools: true,
 });
